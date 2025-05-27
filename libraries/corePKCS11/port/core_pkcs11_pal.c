@@ -466,6 +466,18 @@ void prvHandleToLabel( char ** pcLabel,
                 *pcLabel = ( char * ) pkcs11configLABEL_CODE_VERIFICATION_KEY;
                 break;
 
+            case eAwsJITPCertificate:
+                *pcLabel = ( char * ) pkcs11configLABEL_JITP_CERTIFICATE;
+                break;
+
+            case eAwsClaimCertificate:
+                *pcLabel = ( char * ) pkcs11configLABEL_CLAIM_CERTIFICATE;
+                break;
+
+            case eAwsClaimPrivateKey:
+                *pcLabel = ( char * ) pkcs11configLABEL_CLAIM_PRIVATE_KEY;
+                break;
+
             default:
                 *pcLabel = NULL;
                 break;
