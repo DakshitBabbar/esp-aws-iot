@@ -110,10 +110,7 @@ static void initialize_nvs_partition()
 #endif // CONFIG_NVS_ENCRYPTION
         esp_err_t ret = nvs_flash_init_partition(NVS_PART_NAME);
         if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-            ESP_LOGW(TAG, "Error initialising the NVS partition [%d]. Not erasing the partition.", ret);
-//            ESP_LOGW(TAG, "Error initialising the NVS partition [%d]. Erasing the partition.", ret);
-//            ESP_ERROR_CHECK(nvs_flash_erase_partition(NVS_PART_NAME));
-            ret = nvs_flash_init_partition(NVS_PART_NAME);
+            ESP_LOGE(TAG, "Error initialising the NVS partition [%d].", ret);
         }
         ESP_ERROR_CHECK(ret);
 #if CONFIG_NVS_ENCRYPTION
