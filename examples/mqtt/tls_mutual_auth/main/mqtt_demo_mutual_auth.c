@@ -247,15 +247,25 @@ extern const char root_cert_auth_end[]   asm("_binary_root_cert_auth_crt_end");
 #define TRANSPORT_SEND_RECV_TIMEOUT_MS      ( 1500U )
 
 /**
- * @brief The MQTT metrics string expected by AWS IoT.
+ * @brief The MQTT metrics parameters expected by AWS IoT.
  */
-#define METRICS_STRING                      "?SDK=" OS_NAME "&Version=" OS_VERSION "&Platform=" HARDWARE_PLATFORM_NAME "&MQTTLib=" MQTT_LIB
+#define METRICS_PARAMETERS                       "SDK=" OS_NAME "&Version=" OS_VERSION "&Platform=" HARDWARE_PLATFORM_NAME "&MQTTLib=" MQTT_LIB
+
+/**
+ * @brief The MQTT metrics string to be appended if #CLIENT_USERNAME doesn't contain parameter.
+ */
+#define METRICS_STRING                           "?" METRICS_PARAMETERS
+
 
 /**
  * @brief The length of the MQTT metrics string expected by AWS IoT.
  */
 #define METRICS_STRING_LENGTH               ( ( uint16_t ) ( sizeof( METRICS_STRING ) - 1 ) )
 
+/**
+ * @brief The MQTT metrics string to be appended if #CLIENT_USERNAME contains parameters.
+ */
+#define METRICS_STRING_APPEND                    "&" METRICS_PARAMETERS
 
 #ifdef CLIENT_USERNAME
 
@@ -265,7 +275,17 @@ extern const char root_cert_auth_end[]   asm("_binary_root_cert_auth_crt_end");
  * This is to support both metrics reporting and username/password based client
  * authentication by AWS IoT.
  */
-    #define CLIENT_USERNAME_WITH_METRICS    CLIENT_USERNAME METRICS_STRING
+
+    #define CLIENT_USERNAME_WITH_METRICS      CLIENT_USERNAME METRICS_STRING
+
+/**
+ * @brief Append the username with the metrics string if #CLIENT_USERNAME contains parameter.
+ *
+ * #CLIENT_USERNAME can be appended with extra parameters like authorizer, token
+ * and signature. Use the #METRICS_STRING_APPEND if parameters are already appended
+ * in #CLIENT_USERNAME.
+ */
+    #define CLIENT_USERNAME_APPEND_METRICS    CLIENT_USERNAME METRICS_STRING_APPEND
 #endif
 
 /**
@@ -630,7 +650,7 @@ static int connectToServerWithBackoffRetries( NetworkContext_t * pNetworkContext
                                               bool * pClientSessionPresent,
                                               bool * pBrokerSessionPresent )
 {
-    int returnStatus = EXIT_SUCCESS;
+    int returnStatus = EXIT_FAILURE;
     BackoffAlgorithmStatus_t backoffAlgStatus = BackoffAlgorithmSuccess;
     TlsTransportStatus_t tlsStatus = TLS_TRANSPORT_SUCCESS;
     BackoffAlgorithmContext_t reconnectParams;
@@ -1154,6 +1174,10 @@ static int establishMqttSession( MQTTContext_t * pMqttContext,
     MQTTStatus_t mqttStatus;
     MQTTConnectInfo_t connectInfo = { 0 };
 
+    #ifdef CLIENT_USERNAME
+        void * pMemchrPtr;
+    #endif
+
     assert( pMqttContext != NULL );
     assert( pSessionPresent != NULL );
 
@@ -1198,9 +1222,20 @@ static int establishMqttSession( MQTTContext_t * pMqttContext,
     #ifdef CLIENT_USERNAME
         connectInfo.pUserName = CLIENT_USERNAME_WITH_METRICS;
         connectInfo.userNameLength = strlen( CLIENT_USERNAME_WITH_METRICS );
-        connectInfo.pPassword = CLIENT_PASSWORD;
-        connectInfo.passwordLength = strlen( CLIENT_PASSWORD );
-    #else
+        pMemchrPtr = memchr( CLIENT_USERNAME, '?', strlen( CLIENT_USERNAME ) );
+
+        if( pMemchrPtr != NULL )
+        {
+            connectInfo.pUserName = CLIENT_USERNAME_APPEND_METRICS;
+            connectInfo.userNameLength = strlen( CLIENT_USERNAME_APPEND_METRICS );
+        }
+        else
+        {
+            connectInfo.pUserName = CLIENT_USERNAME_WITH_METRICS;
+            connectInfo.userNameLength = strlen( CLIENT_USERNAME_WITH_METRICS );
+        }
+
+    #else  /* ifdef CLIENT_USERNAME */
         connectInfo.pUserName = METRICS_STRING;
         connectInfo.userNameLength = METRICS_STRING_LENGTH;
         /* Password for authentication is not used. */

@@ -110,9 +110,7 @@ static void initialize_nvs_partition()
 #endif // CONFIG_NVS_ENCRYPTION
         esp_err_t ret = nvs_flash_init_partition(NVS_PART_NAME);
         if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-            ESP_LOGW(TAG, "Error initialising the NVS partition [%d]. Erasing the partition.", ret);
-            ESP_ERROR_CHECK(nvs_flash_erase_partition(NVS_PART_NAME));
-            ret = nvs_flash_init_partition(NVS_PART_NAME);
+            ESP_LOGE(TAG, "Error initialising the NVS partition [%d].", ret);
         }
         ESP_ERROR_CHECK(ret);
 #if CONFIG_NVS_ENCRYPTION
@@ -235,6 +233,7 @@ CK_OBJECT_HANDLE PKCS11_PAL_SaveObject( CK_ATTRIBUTE_PTR pxLabel,
         return eInvalidHandle;
     }
 
+    nvs_commit(handle);
     nvs_close(handle);
     return xHandle;
 }
@@ -464,6 +463,18 @@ void prvHandleToLabel( char ** pcLabel,
 
             case eAwsCodeSigningKey:
                 *pcLabel = ( char * ) pkcs11configLABEL_CODE_VERIFICATION_KEY;
+                break;
+
+            case eAwsJITPCertificate:
+                *pcLabel = ( char * ) pkcs11configLABEL_JITP_CERTIFICATE;
+                break;
+
+            case eAwsClaimCertificate:
+                *pcLabel = ( char * ) pkcs11configLABEL_CLAIM_CERTIFICATE;
+                break;
+
+            case eAwsClaimPrivateKey:
+                *pcLabel = ( char * ) pkcs11configLABEL_CLAIM_PRIVATE_KEY;
                 break;
 
             default:

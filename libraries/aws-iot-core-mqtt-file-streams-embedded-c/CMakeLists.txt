@@ -53,6 +53,10 @@ set_source_files_properties(
 "${CMAKE_CURRENT_LIST_DIR}/aws-iot-core-mqtt-file-streams-embedded-c/source/MQTTFileDownloader.c"
 PROPERTIES COMPILE_FLAGS -Wno-format)
 
+set_source_files_properties(
+"${CMAKE_CURRENT_LIST_DIR}/aws-iot-core-mqtt-file-streams-embedded-c/source/MQTTFileDownloader_cbor.c"
+PROPERTIES COMPILE_FLAGS -Wno-incompatible-pointer-types)
+
 if (NOT CONFIG_MQTT_STREAMS_USE_CUSTOM_CONFIG)
 target_compile_definitions( ${COMPONENT_TARGET} PUBLIC MQTT_STREAMS_DO_NOT_USE_CUSTOM_CONFIG=1 )
 endif()
